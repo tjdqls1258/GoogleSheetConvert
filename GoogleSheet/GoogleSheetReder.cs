@@ -15,9 +15,8 @@ using UnityEngine.Events;
 public class GoogleSheetReder
 {
     private static readonly string ClientName = "user";
-    private static readonly string dataPath = $"{UnityEngine.Application.dataPath.Replace("Assets", "")} client_secret_633291316510-ao56irbicvfhrm2m9n1k0scean980ufl.apps.googleusercontent.com.json".Replace(" ","");
+    private static readonly string dataPath = $"{UnityEngine.Application.dataPath.Replace("Assets", "")} Youer Google client_secret.json".Replace(" ","");
 
-    [MenuItem("Tool/Sheet Test")]
     public static SheetsService CreateService()
     {
         var scopes = new string[] { SheetsService.Scope.SpreadsheetsReadonly };
@@ -34,12 +33,6 @@ public class GoogleSheetReder
         });
 
         return service;
-    }
-
-    [MenuItem("Tool/Sheet Test 01")]
-    public static void TestCSV()
-    {
-        CreateService_CSV(CreateService(), "Sheet1", "1cHsu_WzyIU0hcShVngFtmm1sDR-JpK_ZNSGX4uzgRxo");
     }
 
     public static void TestCSV02(UnityAction<IList<IList<object>>> callback, string ID, string Name)
@@ -94,11 +87,11 @@ public class GoogleSheetReder
         }
 
         StringBuilder csvInfo = new StringBuilder();
-        for (int x = 1; x < values.Count; x++) //Çà
+        for (int x = 1; x < values.Count; x++) //Ã‡Ã 
         {
             if (x != 1)
                 csvInfo.AppendLine();
-            for (int y = 0; y < columnCount; y++) //¿­
+            for (int y = 0; y < columnCount; y++) //Â¿Â­
             {
                 if (ignoreIndex.Exists(i => i == y)) continue;
 
