@@ -1,10 +1,12 @@
 #if UNITY_EDITOR
 using Google.Apis.Auth.OAuth2;
+using Google.Apis.Json;
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Threading;
 using Unity.Android.Gradle.Manifest;
@@ -12,14 +14,16 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class GoogleSheetReder
+public class GoogleSheetReder : EditorWindow
 {
     private static readonly string ClientName = "user";
-    private static readonly string dataPath = $"{UnityEngine.Application.dataPath.Replace("Assets", "")} Youer Google client_secret.json".Replace(" ","");
+    private static readonly string dataPath = $"{UnityEngine.Application.dataPath.Replace("Assets", "")}client_secret_633291316510-ao56irbicvfhrm2m9n1k0scean980ufl.apps.googleusercontent.com.json";
 
     public static SheetsService CreateService()
     {
         var scopes = new string[] { SheetsService.Scope.SpreadsheetsReadonly };
+
+        Debug.Log(dataPath);
         var credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
             //pass, 
             GoogleClientSecrets.FromFile($"{dataPath}").Secrets,
@@ -56,7 +60,7 @@ public class GoogleSheetReder
         callback.Invoke(value.Values);
     }
 
-    private static void CreateService_CSV(SheetsService service, string sheetName, string spreadSheetID)
+    private static string CreateService_CSV(SheetsService service, string sheetName, string spreadSheetID)
     {
         ValueRange value;
         try
@@ -66,7 +70,7 @@ public class GoogleSheetReder
         catch (Exception ex)
         {
             Debug.LogError($"{sheetName} request Error : {ex.Message}");
-            return;
+            return "";
         }
 
         var values = value.Values;
@@ -117,7 +121,109 @@ public class GoogleSheetReder
             }
         }
         Debug.Log(csvInfo);
+        return csvInfo.ToString();
         //Set CSV csvInfo
     }
+
+    #region Window
+
+    private static string CSVSettingPath = $"{UnityEngine.Application.dataPath}/GoogleSheet/Editor/CSVSettingJson.json";
+    private static string CSVSavePath = $"{UnityEngine.Application.dataPath}/GoogleSheet/CSVData/{{0}}.csv";
+    private static List<CSVData> CSVDataList = new();
+    private static List<bool> toggleList = new();
+
+    [Serializable]
+    public class CSVData
+    {
+        public string Name;
+        public string SheetName;
+        public string SheetID;
+    }
+
+    [MenuItem("Tools/CSV Loader")]
+    public static void ShowMyEditor()
+    {
+        LoadSetting();
+        EditorWindow wnd = GetWindow<GoogleSheetReder>();
+        wnd.titleContent = new GUIContent("Google Sheet Loader");
+    }
+
+    void OnGUI()
+    {
+        GUILayout.BeginVertical();
+        for (int i = 0; i < CSVDataList.Count; i++)
+        {
+            toggleList[i] = EditorGUILayout.BeginToggleGroup($"{CSVDataList[i].Name}" , toggleList[i]);
+            GUILayout.Space(1);
+            CSVDataList[i].Name = EditorGUILayout.TextField("Name", CSVDataList[i].Name);
+            CSVDataList[i].SheetID = EditorGUILayout.TextField("Sheet ID", CSVDataList[i].SheetID);
+            CSVDataList[i].SheetName = EditorGUILayout.TextField("Sheet Name", CSVDataList[i].SheetName);
+            EditorGUILayout.EndToggleGroup();
+        }
+
+        GUILayout.EndVertical();
+
+        if (GUILayout.Button("Add")) 
+        {
+            AddData();
+            SaveSetting();
+        }
+
+        if (GUILayout.Button("ConvartCSV"))
+        {
+            SheetsService service = CreateService();
+            for (int i = 0; i < CSVDataList.Count; i++)
+            {
+                if (toggleList[i])
+                {
+                    string csvData = CreateService_CSV(service, 
+                        CSVDataList[i].SheetName, 
+                        CSVDataList[i].SheetID);
+
+                    File.WriteAllText(string.Format(CSVSavePath, CSVDataList[i].Name), csvData);
+                    SaveSetting();
+                }
+            }
+        }
+
+
+        void AddData()
+        {
+            CSVDataList.Add(new());
+            toggleList.Add(false);
+        }
+    }
+
+    public static void LoadSetting()
+    {
+        if(!File.Exists(CSVSettingPath))
+        {
+            string data = "";
+            File.WriteAllText(CSVSettingPath, data);
+        }
+
+        string Json =  File.ReadAllText(CSVSettingPath);
+        CSVDataList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<CSVData>>(Json);
+
+        if (CSVDataList == null)
+        {
+            CSVDataList = new();
+            return;
+        }
+
+        foreach (CSVData data in CSVDataList)
+        {
+            toggleList.Add(false);
+        }
+    }
+
+    public static void SaveSetting()
+    {
+        string data = Newtonsoft.Json.JsonConvert.SerializeObject(CSVDataList);
+        Debug.Log(data);
+        File.WriteAllText(CSVSettingPath, data);
+    }
+    #endregion
+
 }
 #endif
