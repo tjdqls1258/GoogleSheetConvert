@@ -17,7 +17,7 @@ using UnityEngine.Events;
 public class GoogleSheetReder : EditorWindow
 {
     private static readonly string ClientName = "user";
-    private static readonly string dataPath = $"{UnityEngine.Application.dataPath.Replace("Assets", "")}.json";
+    private static readonly string dataPath = $"{UnityEngine.Application.dataPath.Replace("Assets", "")}client_secret_633291316510-ao56irbicvfhrm2m9n1k0scean980ufl.apps.googleusercontent.com.json";
 
     public static SheetsService CreateService()
     {
@@ -131,7 +131,7 @@ public class GoogleSheetReder : EditorWindow
     private static string CSVSavePath = $"{UnityEngine.Application.dataPath}/GoogleSheet/CSVData/{{0}}.csv";
     private static List<CSVData> CSVDataList = new();
     private static List<bool> toggleList = new();
-
+    private Vector2 scrollPos = Vector2.zero;
     [Serializable]
     public class CSVData
     {
@@ -150,7 +150,7 @@ public class GoogleSheetReder : EditorWindow
 
     void OnGUI()
     {
-        GUILayout.BeginVertical();
+        scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
         for (int i = 0; i < CSVDataList.Count; i++)
         {
             toggleList[i] = EditorGUILayout.BeginToggleGroup($"{CSVDataList[i].Name}" , toggleList[i]);
@@ -159,9 +159,15 @@ public class GoogleSheetReder : EditorWindow
             CSVDataList[i].SheetID = EditorGUILayout.TextField("Sheet ID", CSVDataList[i].SheetID);
             CSVDataList[i].SheetName = EditorGUILayout.TextField("Sheet Name", CSVDataList[i].SheetName);
             EditorGUILayout.EndToggleGroup();
+            if (GUILayout.Button("Remove"))
+            {
+                Remove(i);
+                SaveSetting();
+            }
+
         }
 
-        GUILayout.EndVertical();
+        EditorGUILayout.EndScrollView();
 
         if (GUILayout.Button("Add")) 
         {
@@ -191,6 +197,12 @@ public class GoogleSheetReder : EditorWindow
         {
             CSVDataList.Add(new());
             toggleList.Add(false);
+        }
+
+        void Remove(int index)
+        {
+            CSVDataList.RemoveAt(index);
+            toggleList.RemoveAt(index);
         }
     }
 
