@@ -17,7 +17,7 @@ using UnityEngine.Events;
 public class GoogleSheetReder : EditorWindow
 {
     private static readonly string ClientName = "user";
-    private static readonly string dataPath = $"{UnityEngine.Application.dataPath.Replace("Assets", "")}client_secret_633291316510-ao56irbicvfhrm2m9n1k0scean980ufl.apps.googleusercontent.com.json";
+    private static readonly string dataPath = $"{UnityEngine.Application.dataPath.Replace("Assets", "")}.json";
 
     public static SheetsService CreateService()
     {
