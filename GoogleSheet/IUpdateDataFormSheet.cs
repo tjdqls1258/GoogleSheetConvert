@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -11,16 +12,28 @@ public static class UpdateDataFormSheet
 {
     public static void CreateData<Data>(List<string> datas, string path) where Data : ScriptableObject, IUpdateDataFormSheet, new()
     {
+        string ID = datas[0];
+        Data data = SetData<Data>(datas);
+
+        MakeScriptable(data, path, ID);
+    }
+
+    public static Data SetData<Data>(string[] datas) where Data : new()
+    {
+        return SetData<Data>(datas.ToList());
+    }
+
+    public static Data SetData<Data>(List<string> datas) where Data : new()
+    {
         Data data = new Data();
         var fields = typeof(Data).GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic
             | System.Reflection.BindingFlags.Instance);
-        string ID = "";
+
         for (int i = 0; i < fields.Length; i++)
         {
             if (datas.Count <= i)
                 break;
-            if (i == 0)
-                ID = datas[i];
+
             FieldInfo field = fields[i];
             Type fieldType = fields[i].FieldType;
 
@@ -46,14 +59,14 @@ public static class UpdateDataFormSheet
 
                 field.SetValue(data, valueToSet);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Debug.LogError(ex);
                 Debug.LogError($"i : {i}, fieldType : {fieldType}, datas[i] : {datas[i]}");
             }
         }
 
-        MakeScriptable(data, path, ID);
+        return data;
     }
 
     public static void MakeScriptable<Data>(Data data, string path, string ID) where Data : ScriptableObject, new()

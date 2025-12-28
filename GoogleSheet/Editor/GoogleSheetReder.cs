@@ -25,7 +25,7 @@ public class GoogleSheetReder : EditorWindow
         }
     }
     private static readonly string ClientName = "user";
-    private static readonly string dataPath = $"{UnityEngine.Application.dataPath.Replace("Assets", "")}/*Your client_secret*/";
+    private static readonly string dataPath = $"{UnityEngine.Application.dataPath.Replace("Assets", "")}client_secret_2_633291316510-ao56irbicvfhrm2m9n1k0scean980ufl.apps.googleusercontent.com.json";
 
     public static SheetsService CreateService()
     {
@@ -47,27 +47,7 @@ public class GoogleSheetReder : EditorWindow
         return service;
     }
 
-    public static void TestCSV02(UnityAction<IList<IList<object>>> callback, string ID, string Name)
-    {
-        CreateService_CSVObject(CreateService(), callback, Name, ID);
-    }
-
-    private static void CreateService_CSVObject(SheetsService service, UnityAction<IList<IList<object>>> callback, string ID, string Name)
-    {
-        ValueRange value;
-        try
-        {
-            value = service.Spreadsheets.Values.Get(Name, ID).Execute();
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"{Name} request Error : {ex.Message}");
-            return;
-        }
-
-        callback.Invoke(value.Values);
-    }
-
+    
     private static string CreateService_CSV(SheetsService service, CSVData csvdata)
     {
         ValueRange value;
@@ -129,13 +109,18 @@ public class GoogleSheetReder : EditorWindow
             }
         }
         Debug.Log(csvInfo);
-        string[] csvList = csvInfo.ToString().Split("\n");
-        foreach (string str in csvList) 
+
+        if (csvdata.IsCSV == false)
         {
-            MakeScriptable(csvdata, str.Split(",").ToList());
+            string[] csvList = csvInfo.ToString().Split("\n");
+            foreach (string str in csvList)
+            {
+                MakeScriptable(csvdata, str.Split(",").ToList());
+            }
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
         }
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
+
         return csvInfo.ToString();
     }
 
@@ -168,9 +153,9 @@ public class GoogleSheetReder : EditorWindow
 
     #region Window
 
-    private static string CSVSettingPath = $"{UnityEngine.Application.dataPath}/GoogleSheet/Editor/CSVSettingJson.json";
-    private static string CSVSavePath = $"{UnityEngine.Application.dataPath}/GoogleSheet/CSVData/{{0}}.csv";
-    private static string SaveScriptableDataPath = $"Assets/GoogleSheet/ScriptableObject";
+    private static string CSVSettingPath = $"{UnityEngine.Application.dataPath}/Util/GoogleSheet/Editor/CSVSettingJson.json";
+    private static string CSVSavePath = $"{UnityEngine.Application.dataPath}/Util/GoogleSheet/CSVData/{{0}}.csv";
+    private static string SaveScriptableDataPath = $"Assets/Util/GoogleSheet/ScriptableObject";
     private static List<CSVData> CSVDataList = new();
     private static List<bool> toggleList = new();
     private Vector2 scrollPos = Vector2.zero;
@@ -181,6 +166,7 @@ public class GoogleSheetReder : EditorWindow
         public string SheetName;
         public string SheetID;
         public string ClassName;
+        public bool IsCSV;
     }
 
     [MenuItem("Tools/CSV Loader")]
@@ -202,6 +188,7 @@ public class GoogleSheetReder : EditorWindow
             CSVDataList[i].SheetID = EditorGUILayout.TextField("Sheet ID", CSVDataList[i].SheetID);
             CSVDataList[i].SheetName = EditorGUILayout.TextField("Sheet Name", CSVDataList[i].SheetName);
             CSVDataList[i].ClassName = EditorGUILayout.TextField("ClassName", CSVDataList[i].ClassName);
+            CSVDataList[i].IsCSV = EditorGUILayout.Toggle("Is CSVData", CSVDataList[i].IsCSV);
             EditorGUILayout.EndToggleGroup();
             if (GUILayout.Button("Remove"))
             {
@@ -229,8 +216,11 @@ public class GoogleSheetReder : EditorWindow
                     string csvData = CreateService_CSV(service, 
                         CSVDataList[i]);
 
-                    File.WriteAllText(string.Format(CSVSavePath, CSVDataList[i].Name), csvData);
-                    SaveSetting();
+                    if (CSVDataList[i].IsCSV)
+                    {
+                        File.WriteAllText(string.Format(CSVSavePath, CSVDataList[i].Name), csvData);
+                        SaveSetting();
+                    }
                 }
             }
         }
