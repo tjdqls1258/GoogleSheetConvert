@@ -137,10 +137,10 @@ public class CSVDataList<Data> : ICsvListHelper where Data : CSVData, new()
 
     public virtual void SetDatas(TextAsset file)
     {
-        m_dataList = ScriptDataLoader<Data>.ReadFile((file, typeof(Data)), this);
+        m_dataList = ScriptDataLoader<Data>.ReadFile((file.text, typeof(Data)), this);
     }
 
-    public virtual void SetDatas(TextAsset file)
+    public virtual void SetDatas(string file)
     {
         m_dataList = ScriptDataLoader<Data>.ReadFile((file, typeof(Data)), this);
     }
